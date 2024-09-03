@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/prashant1k99/URL-Shortner/db"
+	"github.com/prashant1k99/URL-Shortner/middleware"
+	"github.com/prashant1k99/URL-Shortner/types"
 	"github.com/prashant1k99/URL-Shortner/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,35 +18,25 @@ import (
 
 type UserResources struct{}
 
-type user struct {
-	ID       primitive.ObjectID `json:"id"`
-	Username string             `json:"username"`
-}
-
-type userWithPassword struct {
-	user
-	Password string `json:"password"`
-}
-
-type userWithAPI struct {
-	user
-	APIKey string `json:"apiKey"`
-}
-
 func (rs UserResources) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Post("/sign-up", rs.signUp)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("This is a user route"))
+	r.With(middleware.NotAuthenticated).Post("/sign-up", rs.signUp)
+	r.With(middleware.AuthenticateUser).Get("/", func(w http.ResponseWriter, r *http.Request) {
+		user, ok := middleware.GetUserFromContext(r.Context())
+		if ok != true {
+			fmt.Println("Unable to get user")
+		} else {
+			fmt.Println("user", user)
+		}
+		utils.RespondWithJSON(w, http.StatusOK, user)
 	})
 	return r
 }
 
 func (rs UserResources) signUp(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-
-	params := userWithPassword{}
+	params := types.UserWithPassword{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
@@ -76,9 +68,11 @@ func (rs UserResources) signUp(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, message)
 		return
 	}
+	userId := result.InsertedID.(primitive.ObjectID)
 	fmt.Printf("Inserted a document: %v\n", result.InsertedID)
-	utils.RespondWithJSON(w, http.StatusCreated, user{
-		ID:       result.InsertedID.(primitive.ObjectID),
+	utils.WriteCookie(w, "session_user", userId.Hex())
+	utils.RespondWithJSON(w, http.StatusCreated, types.User{
+		ID:       userId,
 		Username: params.Username,
 	})
 }
