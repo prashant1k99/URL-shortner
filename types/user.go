@@ -11,8 +11,3 @@ type UserWithPassword struct {
 	User
 	Password string `json:"password"`
 }
-
-type UserWithAPI struct {
-	User
-	APIKey string `json:"apiKey"`
-}
