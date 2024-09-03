@@ -3,13 +3,14 @@
 This is a test project to learn and practice Go concepts by building projects. In this project I am building a small URL Shortner.
 
 ### Features:
-- [x] Authentication with email and password.
+- [ ] Authentication with email and password.
 - [ ] APIKey validation for Routes.
 - [ ] User passes a URL, it should return a small URL for that user.
 - [ ] Add base analytics of URL used.
 
 ### Steps:
-- [ ] Initialize Mongo DB.
+- [ ] Use Go-Chi for Server framework.
+- [x] Initialize Mongo DB.
 - [ ] Implement User Authentication.
 - [ ] Implement APIKey validation and usage.
 - [ ] Implement URL Shortner by using base64 encoding.
