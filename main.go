@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/prashant1k99/URL-Shortner/db"
+	"github.com/prashant1k99/URL-Shortner/user"
 )
 
 func main() {
@@ -29,6 +30,8 @@ func main() {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World"))
 	})
+
+	router.Mount("/user", user.UserResources{}.Routes())
 	defer db.DisconnectDB()
 
 	PORT := os.Getenv("PORT")
