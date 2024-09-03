@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,8 +11,6 @@ import (
 	"github.com/prashant1k99/URL-Shortner/middleware"
 	"github.com/prashant1k99/URL-Shortner/types"
 	"github.com/prashant1k99/URL-Shortner/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserResources struct{}
@@ -49,20 +46,7 @@ func (rs UserResources) signUp(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Username and password are required to Signup")
 		return
 	}
-	userCollection, err := db.GetCollection("users")
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	encryptedPass, err := utils.EncryptPassword(params.Password)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	result, err := userCollection.InsertOne(context.TODO(), bson.M{
-		"username": params.Username,
-		"password": encryptedPass,
-	})
+	userId, err := db.CreateUser(&params)
 	if err != nil {
 		message := err.Error()
 		if strings.Contains(err.Error(), "duplicate key error collection:") {
@@ -71,8 +55,6 @@ func (rs UserResources) signUp(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, message)
 		return
 	}
-	userId := result.InsertedID.(primitive.ObjectID)
-	fmt.Printf("Inserted a document: %v\n", result.InsertedID)
 	utils.WriteCookie(w, "session_user", userId.Hex())
 	utils.RespondWithJSON(w, http.StatusCreated, types.User{
 		ID:       userId,
@@ -102,16 +84,10 @@ func (rs UserResources) logIn(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Username and password are required to Signup")
 		return
 	}
-	userCollection, err := db.GetCollection("users")
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
 
-	var user types.UserWithPassword
-	err = userCollection.FindOne(context.TODO(), bson.M{"username": params.Username}).Decode(&user)
+	user, err := db.GetUserByUsername(params.Username)
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid authentication")
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 

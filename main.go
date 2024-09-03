@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Hey, Hello World!")
 	db.ConnectDB()
 
 	router := chi.NewRouter()
@@ -32,6 +31,8 @@ func main() {
 	})
 
 	router.Mount("/user", user.UserResources{}.Routes())
+	// router.Mount("/shorten-it") // For creating shortened URL
+	// router.Mount("/r") // For redirecting user
 	defer db.DisconnectDB()
 
 	PORT := os.Getenv("PORT")

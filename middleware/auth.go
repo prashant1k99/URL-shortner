@@ -8,7 +8,6 @@ import (
 	"github.com/prashant1k99/URL-Shortner/db"
 	"github.com/prashant1k99/URL-Shortner/types"
 	"github.com/prashant1k99/URL-Shortner/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -19,24 +18,18 @@ func AuthenticateUser(next http.Handler) http.Handler {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
-		coll, err := db.GetCollection("users")
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
-			return
-		}
-		var user types.User
 		userObjectId, err := primitive.ObjectIDFromHex(userId)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
-			return
-		}
-		err = coll.FindOne(context.TODO(), bson.M{"_id": userObjectId}).Decode(&user)
+
+		user, err := db.GetUserById(userObjectId)
 		if err != nil {
 			fmt.Println(err.Error())
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid authentication")
 			return
 		}
-		ctx := context.WithValue(r.Context(), "user", &user)
+		ctx := context.WithValue(r.Context(), "user", types.User{
+			ID:       user.ID,
+			Username: user.Username,
+		})
 		// Call the next handler, passing the updated context
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
