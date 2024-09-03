@@ -21,13 +21,16 @@ type UserResources struct{}
 func (rs UserResources) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.With(middleware.NotAuthenticated).Post("/sign-up", rs.signUp)
+	r.With(middleware.IsNotAuthenticated).Post("/sign-up", rs.signUp)
+	r.With(middleware.IsNotAuthenticated).Post("/login", rs.logIn)
+	r.With(middleware.IsAuthenticed).Delete("/sign-out", rs.signOut)
+
 	r.With(middleware.AuthenticateUser).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		user, ok := middleware.GetUserFromContext(r.Context())
 		if ok != true {
 			fmt.Println("Unable to get user")
-		} else {
-			fmt.Println("user", user)
+			utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+			return
 		}
 		utils.RespondWithJSON(w, http.StatusOK, user)
 	})
@@ -73,6 +76,57 @@ func (rs UserResources) signUp(w http.ResponseWriter, r *http.Request) {
 	utils.WriteCookie(w, "session_user", userId.Hex())
 	utils.RespondWithJSON(w, http.StatusCreated, types.User{
 		ID:       userId,
+		Username: params.Username,
+	})
+}
+
+func (rs UserResources) signOut(w http.ResponseWriter, _ *http.Request) {
+	utils.DeleteCookie(w, "session_user")
+	type res struct {
+		Status string `json:"status"`
+	}
+	utils.RespondWithJSON(w, http.StatusOK, res{
+		Status: "Ok",
+	})
+}
+
+func (rs UserResources) logIn(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	params := types.UserWithPassword{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	if params.Username == "" || params.Password == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Username and password are required to Signup")
+		return
+	}
+	userCollection, err := db.GetCollection("users")
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	var user types.UserWithPassword
+	err = userCollection.FindOne(context.TODO(), bson.M{"username": params.Username}).Decode(&user)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid authentication")
+		return
+	}
+
+	isPasswordValid, err := utils.ComparePassword(params.Password, user.Password)
+	if err != nil {
+		fmt.Println("Error occured while comparing pass", err)
+	}
+	if !isPasswordValid {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid username and password")
+		return
+	}
+
+	utils.WriteCookie(w, "session_user", user.ID.Hex())
+	utils.RespondWithJSON(w, http.StatusCreated, types.User{
+		ID:       user.ID,
 		Username: params.Username,
 	})
 }

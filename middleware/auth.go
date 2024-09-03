@@ -42,11 +42,22 @@ func AuthenticateUser(next http.Handler) http.Handler {
 	})
 }
 
-func NotAuthenticated(next http.Handler) http.Handler {
+func IsNotAuthenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userId, err := utils.ReadCookie(r, "session_user")
 		if err == nil || userId != "" {
 			utils.RespondWithError(w, http.StatusConflict, "User is already authenticated")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func IsAuthenticed(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userId, err := utils.ReadCookie(r, "session_user")
+		if err != nil || userId == "" {
+			utils.RespondWithError(w, http.StatusUnauthorized, "User is not authenticated")
 			return
 		}
 		next.ServeHTTP(w, r)
