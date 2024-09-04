@@ -19,6 +19,7 @@ type ShortURLResponse struct {
 	ShortenedUrl string
 }
 
+// NOTE: This function does not returns a Universal unique code, so in order to tackle the duplicate shortcode issue, Add unique index in mongo for this
 func generateShortCode() (string, error) {
 	// Get the current timestamp (4 bytes)
 	timestamp := uint32(time.Now().Unix())
