@@ -11,15 +11,21 @@ import (
 	"github.com/prashant1k99/URL-Shortner/middleware"
 	"github.com/prashant1k99/URL-Shortner/types"
 	"github.com/prashant1k99/URL-Shortner/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UrlResources struct{}
+type UrlAnalyticsResponse struct {
+	Count int64 `json:"visitCounts"`
+}
 
 func (rs UrlResources) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.With(middleware.AuthenticateUser).Post("/", rs.createShortURL)
 	r.With(middleware.AuthenticateUser).Get("/", rs.getAllShortURLs)
+	r.With(middleware.AuthenticateUser).Get("/{urlId}/analytics", rs.getAnalyticsForURL)
+
 	return r
 }
 
@@ -91,4 +97,25 @@ func (rs UrlResources) getAllShortURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.RespondWithJSON(w, http.StatusOK, urls)
+}
+
+func (rs UrlResources) getAnalyticsForURL(w http.ResponseWriter, r *http.Request) {
+	urlId := chi.URLParam(r, "urlId")
+	if urlId == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid request, pass url Id for analytics")
+		return
+	}
+	urlObjectId, err := primitive.ObjectIDFromHex(urlId)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid URL ID")
+		return
+	}
+	visitCount, err := db.GetUrlVisitCounts(urlObjectId)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Internal Server Error")
+		return
+	}
+	utils.RespondWithJSON(w, http.StatusOK, UrlAnalyticsResponse{
+		Count: visitCount,
+	})
 }

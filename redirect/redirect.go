@@ -41,18 +41,15 @@ func getClientIP(r *http.Request) string {
 }
 
 func trackAnalytics(urlId primitive.ObjectID, r *http.Request) {
-	fmt.Println("adding analytics")
 	ip := getClientIP(r)
 	analytics := types.Analytics{
 		IP:     ip,
 		UrlId:  urlId,
 		AtTime: time.Now(),
 	}
-	analyticsId, err := db.AddAnalytics(analytics)
+	_, err := db.AddAnalytics(analytics)
 	if err != nil {
 		fmt.Println("Unable to save analytics with err:", err)
-	} else {
-		fmt.Println("Added analytics with:", analyticsId)
 	}
 }
 
