@@ -41,15 +41,29 @@ func generateShortCode() (string, error) {
 }
 
 func CreateShortUrl(url *types.Url, baseURL string) (ShortURLResponse, error) {
-	shortenedUrl, err := generateShortCode()
-	if err != nil {
-		return ShortURLResponse{}, fmt.Errorf("Error while generatign shortcode")
-	}
 	urlCollection, err := GetCollection("urls")
 	if err != nil {
 		return ShortURLResponse{}, err
 	}
 
+	// Generate a unique shortcode
+	var shortenedUrl string
+	for {
+		shortenedUrl, err = generateShortCode()
+		if err != nil {
+			return ShortURLResponse{}, fmt.Errorf("Error while generating shortcode: %v", err)
+		}
+
+		// Check if the shortcode already exists
+		count, err := urlCollection.CountDocuments(context.TODO(), bson.M{"shortenedurl": shortenedUrl})
+		if err != nil {
+			return ShortURLResponse{}, fmt.Errorf("Error while checking shortcode uniqueness: %v", err)
+		}
+
+		if count == 0 {
+			break
+		}
+	}
 	// Insert the document to get the Id
 	result, err := urlCollection.InsertOne(context.TODO(), types.UrlWithShortVersion{
 		Url:          *url,
