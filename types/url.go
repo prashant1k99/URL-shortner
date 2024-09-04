@@ -4,8 +4,8 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Url struct {
 	ID     primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	URL    string             `json:"url" bson:"url"`
 	UserId primitive.ObjectID `json:"userId" bson:"user"`
+	URL    string             `json:"url" bson:"url"`
 }
 type UrlWithShortVersion struct {
 	Url          `bson:",inline"`
