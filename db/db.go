@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,10 +18,22 @@ func ConnectDB() {
 	MONGO_URI := os.Getenv("MONGO_URI")
 	configOptions := options.Client().ApplyURI(MONGO_URI)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	var err error
-	mongoClient, err = mongo.Connect(context.TODO(), configOptions)
+	mongoClient, err = mongo.Connect(ctx, configOptions)
 	if err != nil {
 		panic(err)
+	}
+
+	select {
+	case <-ctx.Done():
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Println("Connection attempt timed out")
+			return
+		}
+	default:
 	}
 
 	err = mongoClient.Ping(context.TODO(), nil)

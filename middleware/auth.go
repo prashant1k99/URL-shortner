@@ -26,10 +26,11 @@ func AuthenticateUser(next http.Handler) http.Handler {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid authentication")
 			return
 		}
-		ctx := context.WithValue(r.Context(), "user", types.User{
+		userInfo := types.User{
 			ID:       user.ID,
 			Username: user.Username,
-		})
+		}
+		ctx := context.WithValue(r.Context(), "user", userInfo)
 		// Call the next handler, passing the updated context
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -58,6 +59,6 @@ func IsAuthenticed(next http.Handler) http.Handler {
 }
 
 func GetUserFromContext(ctx context.Context) (*types.User, bool) {
-	user, ok := ctx.Value("user").(*types.User)
-	return user, ok
+	user, ok := ctx.Value("user").(types.User)
+	return &user, ok
 }
