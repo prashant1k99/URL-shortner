@@ -111,3 +111,16 @@ func GetAllShortUrlsForUser(userId primitive.ObjectID, baseURL string) ([]types.
 	}
 	return urls, nil
 }
+
+func GetUrlFromShortUrl(shortUrl string) (types.UrlWithShortVersion, error) {
+	urlCollection, err := GetCollection("urls")
+	if err != nil {
+		return types.UrlWithShortVersion{}, err
+	}
+	var url types.UrlWithShortVersion
+	err = urlCollection.FindOne(context.TODO(), bson.M{"shUrl": shortUrl}).Decode(&url)
+	if err != nil {
+		return types.UrlWithShortVersion{}, err
+	}
+	return url, nil
+}

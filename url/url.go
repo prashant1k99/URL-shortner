@@ -33,7 +33,7 @@ func generateURLForRedirection(r *http.Request) string {
 	host := r.Host
 
 	// Construct the full server URL
-	serverURL := fmt.Sprintf("%s://%s/", scheme, host)
+	serverURL := fmt.Sprintf("%s://%s/r/", scheme, host)
 	return serverURL
 }
 
@@ -90,6 +90,5 @@ func (rs UrlResources) getAllShortURLs(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	fmt.Println(urls)
 	utils.RespondWithJSON(w, http.StatusOK, urls)
 }

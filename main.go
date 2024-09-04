@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/prashant1k99/URL-Shortner/db"
+	"github.com/prashant1k99/URL-Shortner/redirect"
 	"github.com/prashant1k99/URL-Shortner/url"
 	"github.com/prashant1k99/URL-Shortner/user"
 )
@@ -32,8 +33,8 @@ func main() {
 	})
 
 	router.Mount("/user", user.UserResources{}.Routes())
-	router.Mount("/url", url.UrlResources{}.Routes()) // For creating shortened URL
-	// router.Mount("/r") // For redirecting user
+	router.Mount("/url", url.UrlResources{}.Routes())    // For creating shortened URL
+	router.Mount("/r", redirect.UserResource{}.Routes()) // For redirecting user
 	defer db.DisconnectDB()
 
 	PORT := os.Getenv("PORT")
