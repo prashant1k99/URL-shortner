@@ -48,6 +48,7 @@ func CreateShortUrl(url *types.Url, baseURL string) (ShortURLResponse, error) {
 
 	// Generate a unique shortcode
 	var shortenedUrl string
+	retries := 0
 	for {
 		shortenedUrl, err = generateShortCode()
 		if err != nil {
@@ -59,9 +60,14 @@ func CreateShortUrl(url *types.Url, baseURL string) (ShortURLResponse, error) {
 		if err != nil {
 			return ShortURLResponse{}, fmt.Errorf("Error while checking shortcode uniqueness: %v", err)
 		}
-
 		if count == 0 {
 			break
+		}
+		if retries < 10 {
+			// So to break the loop if the unique shortcode is not generated in 10 attempts
+			return ShortURLResponse{}, fmt.Errorf("Internal Server Error")
+		} else {
+			retries++
 		}
 	}
 	// Insert the document to get the Id
