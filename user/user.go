@@ -24,7 +24,7 @@ func (rs UserResources) Routes() chi.Router {
 
 	r.With(middleware.AuthenticateUser).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		user, ok := middleware.GetUserFromContext(r.Context())
-		if ok != true {
+		if !ok {
 			fmt.Println("Unable to get user")
 			utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 			return
