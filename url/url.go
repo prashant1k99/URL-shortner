@@ -14,10 +14,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type UrlResources struct{}
-type UrlAnalyticsResponse struct {
-	Count int64 `json:"visitCounts"`
-}
+type (
+	UrlResources         struct{}
+	UrlAnalyticsResponse struct {
+		Count int64 `json:"visitCounts"`
+	}
+)
 
 func (rs UrlResources) Routes() chi.Router {
 	r := chi.NewRouter()
@@ -56,7 +58,7 @@ func (rs UrlResources) createShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, ok := middleware.GetUserFromContext(r.Context())
-	if ok != true {
+	if !ok {
 		fmt.Println("Unable to get user")
 		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -85,7 +87,7 @@ func (rs UrlResources) createShortURL(w http.ResponseWriter, r *http.Request) {
 
 func (rs UrlResources) getAllShortURLs(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
-	if ok != true {
+	if !ok {
 		fmt.Println("Unable to get user")
 		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return

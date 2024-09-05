@@ -7,8 +7,8 @@ import (
 )
 
 type Analytics struct {
+	AtTime time.Time          `json:"at" bson:"at"`
+	IP     string             `json:"ip" bson:"ip"`
 	ID     primitive.ObjectID `json:"id" bson:"_id"`
 	UrlId  primitive.ObjectID `json:"urlId" bson:"urlId"`
-	IP     string             `json:"ip" bson:"ip"`
-	AtTime time.Time          `json:"at" bson:"at"`
 }
