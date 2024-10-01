@@ -19,6 +19,10 @@ func AuthenticateUser(next http.Handler) http.Handler {
 			return
 		}
 		userObjectId, err := primitive.ObjectIDFromHex(userId)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user id")
+			return
+		}
 
 		user, err := db.GetUserById(userObjectId)
 		if err != nil {
