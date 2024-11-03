@@ -75,7 +75,7 @@ func (rs UserResource) redirectUrl(w http.ResponseWriter, r *http.Request) {
 		// Track the analytics in a goroutine to avoid blocking the response
 		go trackAnalytics(urlInfo.ID, r)
 
-		http.Redirect(w, r, urlInfo.URL, http.StatusMovedPermanently) // 301 Redirect
+		http.Redirect(w, r, urlInfo.URL, http.StatusTemporaryRedirect) // 302 Redirect so that it will also have analytics
 		return
 	}
 	http.NotFound(w, r)
